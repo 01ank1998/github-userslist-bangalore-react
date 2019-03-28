@@ -4,14 +4,12 @@ import Escaperegexp from 'escape-string-regexp';
 import Pagination from "react-paginating";
 
 class ListContacts extends Component{
-    static propTypes = {
-        contact : PropTypes.array.isRequired
-    }
+   
 
     state = {
         query : '',
         contacts : [],
-        
+        currentPage: 1
     }
     
     //updating the query 
@@ -21,24 +19,33 @@ class ListContacts extends Component{
     
     //updating the data in the page
     handlePageChange = (page,e) => {
-        this.fetchData(page)
+        this.setState({
+          currentPage: page
+        })
       }
-    
-    fetchData(page){
-        fetch(`https://api.github.com/search/users?q=location:bangalore&page=${page}`)
-        .then(response => response.json())
-        .then(data => 
-          this.setState({contacts:data.items}))
-      }
+   
 
     componentDidMount(){
-        fetch(`https://api.github.com/search/users?q=location:bangalore&page=1`)
+        fetch(`https://api.github.com/search/users?q=location:bangalore&page=${this.state.currentPage}`)
          .then(response => response.json())
          .then(data => 
            this.setState({contacts:data.items}))
-     }
-     
 
+         
+
+        
+    }
+    componentDidUpdate(prevProps,prevState) {
+        if (
+            this.state.currentPage !==
+            prevState.currentPage
+          ) {
+            fetch(`https://api.github.com/search/users?q=location:bangalore&page=${this.state.currentPage}`)
+            .then(response => response.json())
+            .then(data => 
+              this.setState({contacts:data.items}))
+          }
+    }
     render(){
         const {contacts,currentPage} = this.state
         const {query} = this.state
@@ -115,8 +122,8 @@ class ListContacts extends Component{
                         totalPages,
                         getPageItemProps
                     }) => (
-                        <div class = "page">
-                        <button class = "btn"
+                        <div className = "page">
+                        <button className = "btn"
                             {...getPageItemProps({
                             pageValue: 1,
                             onPageChange: this.handlePageChange
@@ -126,7 +133,7 @@ class ListContacts extends Component{
                         </button>
 
                         {hasPreviousPage && (
-                            <button class = "btn"
+                            <button className = "btn"
                             {...getPageItemProps({
                                 pageValue: previousPage,
                                 onPageChange: this.handlePageChange
@@ -142,7 +149,7 @@ class ListContacts extends Component{
                             activePage = { backgroundColor: "#fdce09" };
                             }
                             return (
-                            <button class = "btn"
+                            <button className = "btn"
                                 {...getPageItemProps({
                                 pageValue: page,
                                 key: page,
@@ -156,7 +163,7 @@ class ListContacts extends Component{
                         })}
 
                         {hasNextPage && (
-                            <button  class = "btn"
+                            <button  className = "btn"
                             {...getPageItemProps({
                                 pageValue: nextPage,
                                 onPageChange: this.handlePageChange
@@ -166,7 +173,7 @@ class ListContacts extends Component{
                             </button>
                         )}
 
-                        <button  class = "btn"
+                        <button  className = "btn"
                             {...getPageItemProps({
                             pageValue: totalPages,
                             onPageChange: this.handlePageChange
