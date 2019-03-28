@@ -30,11 +30,8 @@ class ListContacts extends Component{
          .then(response => response.json())
          .then(data => 
            this.setState({contacts:data.items}))
-
-         
-
-        
     }
+
     componentDidUpdate(prevProps,prevState) {
         if (
             this.state.currentPage !==
