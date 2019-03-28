@@ -1,44 +1,71 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Escaperegexp from 'escape-string-regexp';
-import {Link} from 'react-router-dom';
-import Sortby from 'sort-by';
+import Pagination from "react-paginating";
 
 class ListContacts extends Component{
     static propTypes = {
-        contact : PropTypes.array.isRequired,
-        onDeleteContact : PropTypes.func.isRequired
+        contact : PropTypes.array.isRequired
     }
+
     state = {
-        query : ''
+        query : '',
+        contacts : [],
+        
     }
+    
+    //updating the query 
     updateQuery = (quer) => {
         this.setState({query:quer.trim()})
     }
     
+    //updating the data in the page
+    handlePageChange = (page,e) => {
+        this.fetchData(page)
+      }
+    
+    fetchData(page){
+        fetch(`https://api.github.com/search/users?q=location:bangalore&page=${page}`)
+        .then(response => response.json())
+        .then(data => 
+          this.setState({contacts:data.items}))
+      }
+
+    componentDidMount(){
+        fetch(`https://api.github.com/search/users?q=location:bangalore&page=1`)
+         .then(response => response.json())
+         .then(data => 
+           this.setState({contacts:data.items}))
+     }
+     
 
     render(){
-        const {contacts,onDeleteContact} = this.props
+        const {contacts,currentPage} = this.state
         const {query} = this.state
+        
         let showingContacts 
+        
+
         if(query)
         {
             const match = new RegExp(Escaperegexp(query),'i')
-            showingContacts = contacts.filter((contact)=>match.test(contact.name))
+            showingContacts = contacts.filter((contact)=>match.test(contact.login))
         }
         else
         {
             showingContacts = contacts
         }
+        
         const showAll = (() => {
             this.setState({
                 query : ''
             })
         })
-        showingContacts.sort(Sortby('name'))
+      
 
         return(
-            <div className = 'list-contacts'>
+            
+        <div className = 'list-contacts'>
             <div className= 'list-contacts-top'>
                <input 
                   className = 'search-contacts'
@@ -47,11 +74,6 @@ class ListContacts extends Component{
                   value = {query}
                   onChange = {(event)=>this.updateQuery(event.target.value)}
                   />
-                  <Link
-                  to = '/create' 
-                  className = 'add-contact'
-                  >Add contact</Link>
-
             </div>
             { (showingContacts.length!==contacts.length) && (
                 <div className = 'showing-contacts'>
@@ -64,17 +86,99 @@ class ListContacts extends Component{
             <ol className = 'contact-list'>
             {
                 showingContacts.map(contact =>(
+                    
                     <li key = {contact.id} className = 'contact-list-item'>
+                   
                     <div className='contact-avatar' style={{
-                        backgroundImage : `url(${contact.avatarURL})`
+                        backgroundImage : `url(${contact.avatar_url})`
                     }}/>
-                    <div className='contact-details'>{contact.name}</div>
-                    <button onClick= {() => onDeleteContact(contact)}  className='contact-remove'>Remove Button</button>
+                    <a className='contact-details' href={contact.html_url} target="_blank">{contact.login}</a>
+                   
                     </li>
+                    
                 ))
             }
             </ol>
-            </div>
+            <Pagination
+                    total={1000}
+                    limit={30}
+                    pageCount={10}
+                    currentPage={currentPage}
+                    >
+                    {({
+                        pages,
+                        currentPage,
+                        hasNextPage,
+                        hasPreviousPage,
+                        previousPage,
+                        nextPage,
+                        totalPages,
+                        getPageItemProps
+                    }) => (
+                        <div class = "page">
+                        <button class = "btn"
+                            {...getPageItemProps({
+                            pageValue: 1,
+                            onPageChange: this.handlePageChange
+                            })}
+                        >
+                            first
+                        </button>
+
+                        {hasPreviousPage && (
+                            <button class = "btn"
+                            {...getPageItemProps({
+                                pageValue: previousPage,
+                                onPageChange: this.handlePageChange
+                            })}
+                            >
+                            {"<"}
+                            </button>
+                        )}
+
+                        {pages.map(page => {
+                            let activePage = null;
+                            if (currentPage === page) {
+                            activePage = { backgroundColor: "#fdce09" };
+                            }
+                            return (
+                            <button class = "btn"
+                                {...getPageItemProps({
+                                pageValue: page,
+                                key: page,
+                                style: activePage,
+                                onPageChange: this.handlePageChange
+                                })}
+                            >
+                                {page}
+                            </button>
+                            );
+                        })}
+
+                        {hasNextPage && (
+                            <button  class = "btn"
+                            {...getPageItemProps({
+                                pageValue: nextPage,
+                                onPageChange: this.handlePageChange
+                            })}
+                            >
+                            {">"}
+                            </button>
+                        )}
+
+                        <button  class = "btn"
+                            {...getPageItemProps({
+                            pageValue: totalPages,
+                            onPageChange: this.handlePageChange
+                            })}
+                        >
+                            last
+                        </button>
+                        </div>
+                    )}
+             </Pagination>
+        </div>
+            
         )
     }
 }
